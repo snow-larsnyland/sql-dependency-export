@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.810.21
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLDependencyMapper", "SQLDependencyMapper.csproj", "{7632634C-DB71-46DA-B609-767190C12BEF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SQLDependencyMapper", "SQLDependencyMapper.csproj", "{7632634C-DB71-46DA-B609-767190C12BEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphViewer", "..\GraphViewer\GraphViewer.csproj", "{9435ED55-0CC6-4AFF-91D4-FD4B31F28057}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{7632634C-DB71-46DA-B609-767190C12BEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7632634C-DB71-46DA-B609-767190C12BEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7632634C-DB71-46DA-B609-767190C12BEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9435ED55-0CC6-4AFF-91D4-FD4B31F28057}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9435ED55-0CC6-4AFF-91D4-FD4B31F28057}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9435ED55-0CC6-4AFF-91D4-FD4B31F28057}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9435ED55-0CC6-4AFF-91D4-FD4B31F28057}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

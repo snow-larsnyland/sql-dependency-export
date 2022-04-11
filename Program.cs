@@ -14,11 +14,20 @@ namespace SQLDependencyMapper
         public Dictionary<string, DependecyNode> StringIndex;
         public Dictionary<int, DependecyNode> IdIndex;
 
-        public DependencyTree(IEnumerable<DependecyNode> nodes)
+        public DependencyTree(List<DependecyNode> nodes)
         {
-            Roots = nodes.Where(o => o.Parents.Count == 0).ToList();
-            StringIndex = nodes.ToDictionary(x => $"{x.SqlObject.SCHEMA}.{x.SqlObject.NAME}");
-            IdIndex = nodes.ToDictionary(x => x.Id);
+            StringIndex = new();
+            IdIndex = new();
+            foreach (var item in nodes)
+            {
+                StringIndex.Add(item.Name, item);
+                IdIndex.Add(item.Id, item);
+            }
+        }
+
+        public void InitRoots()
+        {
+            Roots = IdIndex.Values.Where(o => o.Parents.Count == 0).ToList();
         }
 
         public List<DependecyNode> Roots { get; private set; }
@@ -26,24 +35,30 @@ namespace SQLDependencyMapper
 
     public class DependecyNode
     {
+        public DependecyNode()
+        {
+            Children = new HashSet<int>();
+            Parents = new HashSet<int>();
+        }
+
         public DependecyNode(string name, SqlObject obj)
         {
-            Id = Program.IdCounter++;
+            Id = DependencyMapper.IdCounter++;
             SqlObject = obj;
 
             Children = new HashSet<int>();
             Parents = new HashSet<int>();
         }
 
-        public int Id { get; private set; }
+        public int Id { get; set; }
         public string Name => $"{SqlObject.SCHEMA}.{SqlObject.NAME}";
-        public SqlObject SqlObject { get; private set; }
+        public SqlObject SqlObject { get; set; }
 
-        public HashSet<int> Children { get; private set; }
-        public HashSet<int> Parents { get; private  set; }
+        public HashSet<int> Children { get; set; }
+        public HashSet<int> Parents { get; set; }
     }
 
-    class Program
+    public class DependencyMapper
     {
         public static int IdCounter = 0;
         public static string InitialCatalog = "SnowLicenseManager";
@@ -51,27 +66,31 @@ namespace SQLDependencyMapper
         const string tablesQuery = "SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES;";
         const string routinesQuery = "SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, ROUTINE_BODY, ROUTINE_DEFINITION, CREATED, LAST_ALTERED FROM INFORMATION_SCHEMA.ROUTINES;";
 
-        static void Main(string[] args)
+        public static DependencyTree CreateTreeFromDb()
         {
             var connectionStrbuilder = new SqlConnectionStringBuilder();
 
             connectionStrbuilder.DataSource = ".";
             connectionStrbuilder.InitialCatalog = InitialCatalog;
-            connectionStrbuilder.UserID = "sa";
-            connectionStrbuilder.Password = "password123!";
+            connectionStrbuilder.IntegratedSecurity = true;
+            //connectionStrbuilder.UserID = "sa";
+            //connectionStrbuilder.Password = "password123!";
 
-            IEnumerable<DependecyNode> tables;
-            IEnumerable<DependecyNode> routines;
+            List<DependecyNode> tables;
+            List<DependecyNode> routines;
 
             using (var connection = new SqlConnection(connectionStrbuilder.ConnectionString))
             {
-                tables = connection.Query<Table>(tablesQuery).Select(o => new DependecyNode($"{o.TABLE_SCHEMA}.{o.TABLE_NAME}", new SqlObject(o)));
-                routines = connection.Query<Routine>(routinesQuery).Select(o => new DependecyNode($"{o.ROUTINE_SCHEMA}.{o.ROUTINE_NAME}", new SqlObject(o)));
+                tables = connection.Query<Table>(tablesQuery).Select(o => new DependecyNode($"{o.TABLE_SCHEMA}.{o.TABLE_NAME}", new SqlObject(o))).ToList();
+                routines = connection.Query<Routine>(routinesQuery).Select(o => new DependecyNode($"{o.ROUTINE_SCHEMA}.{o.ROUTINE_NAME}", new SqlObject(o))).ToList();
             }
 
-            var dTree = new DependencyTree(tables.Union(routines));
+            var newList = tables;
+            newList.AddRange(routines);
 
-            foreach(var item in tables)
+            var dTree = new DependencyTree(newList);
+
+            foreach(var item in dTree.IdIndex.Values)
             {
                 var itemName = item.Name;
 
@@ -132,16 +151,23 @@ namespace SQLDependencyMapper
 
                     foreach(var routine in textMatches)
                     {
+                        if(routine.Name == item.Name)
+                            continue;
+
                         item.Parents.Add(routine.Id);
                         routine.Children.Add(item.Id);
                     }
                 }
             }
 
-            Grapher.Write(dTree);
+            dTree.InitRoots();
+
+            return dTree;
+
+            //Grapher.Write(dTree);
         }
 
-        public static IEnumerable<DependecyNode> GetTextMatches(IEnumerable<DependecyNode> routines, DependecyNode find)
+        public static IEnumerable<DependecyNode> GetTextMatches(List<DependecyNode> routines, DependecyNode find)
         {
             var matches = new List<DependecyNode>();
             foreach(var item in routines)

@@ -20,6 +20,13 @@
 function renderTree(jsonStr) {
     debugger;
     var tree = JSON.parse(jsonStr);
+
+    var html = "";
+    for (key in tree) {
+        html += "<div><span>" + tree[key].Name + "</span></div>";
+    }
+
+    document.getElementsByClassName("tree")[0].innerHTML = html;
 }
 
 document.getElementById('dependencyFile').addEventListener('change', handleFileSelect, false);
